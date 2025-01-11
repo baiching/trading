@@ -10,11 +10,8 @@ import org.slf4j.LoggerFactory;
 @RestController
 public class HomeController {
 
-    private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
-
     @GetMapping
-    public @ResponseBody String home() {
-        //logger.info("Home endpoint called");
+    public String home() {
         return "welcome to trading platform";
     }
 
