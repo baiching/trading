@@ -33,7 +33,11 @@ public class JwtProvider {
 
     public static String getEmailFromJwtToken(String token){
         token = token.substring(7);
-        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJwt(token).getBody();
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
                 //.setSigningKey
         String email = String.valueOf(claims.get("email"));
         return email;

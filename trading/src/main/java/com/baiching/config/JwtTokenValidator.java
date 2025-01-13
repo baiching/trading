@@ -23,17 +23,26 @@ import java.util.List;
 public class JwtTokenValidator extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
         String jwt=request.getHeader(JwtConstant.JWT_HEADER);
 
         //the string format `Bearer *token*`
-        if(jwt != null) {
-            jwt= jwt.substring(7);
+        if(jwt == null || !jwt.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        jwt = jwt.substring(7);
 
             try{
                 SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
 
                 //parserBuilder has changed to parser(), parseClaimsJws = parseSignedClaims, getBody = getPayload
-                Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJwt(jwt).getBody();
+                Claims claims = Jwts.parserBuilder()
+                        .setSigningKey(key)
+                        .build()
+                        .parseClaimsJws(jwt)
+                        .getBody();
 
                 String email = String.valueOf(claims.get("email"));
 
@@ -54,5 +63,5 @@ public class JwtTokenValidator extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
         }
-    }
+
 }
