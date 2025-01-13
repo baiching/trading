@@ -20,7 +20,7 @@ public class AppConfig {
                         .requestMatchers("/api/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtTokenValidator(), BasicAuthenticationFilter.class)
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf->csrf.disable())
                 .cors(cors->cors.configurationSource(corsConfigurationSource()));
         return http.build();
     }

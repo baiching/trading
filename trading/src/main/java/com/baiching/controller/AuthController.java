@@ -1,6 +1,8 @@
 package com.baiching.controller;
 
+import com.baiching.config.JwtProvider;
 import com.baiching.repository.UserRepository;
+import com.baiching.response.AuthResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +23,7 @@ public class AuthController {
     private UserRepository userRepository;
 
     @PostMapping("/signup")
-    public ResponseEntity<User> register(@RequestBody User user) throws Exception {
+    public ResponseEntity<AuthResponse> register(@RequestBody User user) throws Exception {
 
 
         User isEmailExist = userRepository.findByEmail(user.getEmail());
@@ -40,11 +42,17 @@ public class AuthController {
 
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 user.getEmail(),
-                user.getPassword(),
-                authorityList);
+                user.getPassword());
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        return new ResponseEntity<>(savedUser, HttpStatus.CREATED); // because new user is created
+        String jwt = JwtProvider.generateToken(auth);
+
+        AuthResponse res = new AuthResponse();
+        res.setJwt(jwt);
+        res.setStatus(true);
+        res.setMessage("register success");
+
+        return new ResponseEntity<>(res, HttpStatus.CREATED); // because new user is created
     }
 }
