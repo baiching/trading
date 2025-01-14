@@ -62,6 +62,7 @@ public class AuthController {
         return new ResponseEntity<>(res, HttpStatus.CREATED); // because new user is created
     }
 
+    //Normal login
     @PostMapping("/signin")
     public ResponseEntity<AuthResponse> login(@RequestBody User user) throws Exception {
 
@@ -73,6 +74,33 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         String jwt = JwtProvider.generateToken(auth);
+
+        AuthResponse res = new AuthResponse();
+        res.setJwt(jwt);
+        res.setStatus(true);
+        res.setMessage("login success");
+
+        return new ResponseEntity<>(res, HttpStatus.CREATED); // because new user is created
+    }
+
+    @PostMapping("/authsignin")
+    public ResponseEntity<AuthResponse> twoFactorLogin(@RequestBody User user) throws Exception {
+
+        String userName = user.getEmail();
+        String password = user.getPassword();
+
+        Authentication auth = authenticate(userName, password);
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        String jwt = JwtProvider.generateToken(auth);
+
+        if(user.getTwoFactorAuth().isEnabled()){
+            AuthResponse res = new AuthResponse();
+            res.setMessage("Two factor auth is enabled");
+            res.setTwoFactorAuthEnabled(true);
+
+        }
 
         AuthResponse res = new AuthResponse();
         res.setJwt(jwt);
