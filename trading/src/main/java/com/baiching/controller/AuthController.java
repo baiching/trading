@@ -1,9 +1,12 @@
 package com.baiching.controller;
 
 import com.baiching.config.JwtProvider;
+import com.baiching.model.TwoFactorOTP;
 import com.baiching.repository.UserRepository;
 import com.baiching.response.AuthResponse;
 import com.baiching.service.CustomUserDetailsService;
+import com.baiching.service.TwoFactorOtpService;
+import com.baiching.utils.OtpUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +30,9 @@ public class AuthController {
 
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
+
+    @Autowired
+    private TwoFactorOtpService twoFactorOtpService;
 
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> register(@RequestBody User user) throws Exception {
@@ -63,7 +69,7 @@ public class AuthController {
     }
 
     //Normal login
-    @PostMapping("/signin")
+    @PostMapping("/normalsignin")
     public ResponseEntity<AuthResponse> login(@RequestBody User user) throws Exception {
 
         String userName = user.getEmail();
@@ -83,7 +89,7 @@ public class AuthController {
         return new ResponseEntity<>(res, HttpStatus.CREATED); // because new user is created
     }
 
-    @PostMapping("/authsignin")
+    @PostMapping("/signin")
     public ResponseEntity<AuthResponse> twoFactorLogin(@RequestBody User user) throws Exception {
 
         String userName = user.getEmail();
@@ -95,11 +101,24 @@ public class AuthController {
 
         String jwt = JwtProvider.generateToken(auth);
 
+        User authUser = userRepository.findByEmail(userName);
+
         if(user.getTwoFactorAuth().isEnabled()){
             AuthResponse res = new AuthResponse();
             res.setMessage("Two factor auth is enabled");
             res.setTwoFactorAuthEnabled(true);
+            String otp = OtpUtils.generateOtp();
 
+            TwoFactorOTP oldTwoFactorOtp = twoFactorOtpService.findByUser(authUser.getId());
+
+            if(oldTwoFactorOtp != null){
+                twoFactorOtpService.deleteTwoFactorOtp(oldTwoFactorOtp);
+            }
+
+            TwoFactorOTP newTwoFactorOTP = twoFactorOtpService.createTwoFactorOtp(authUser, otp, jwt);
+            res.setSession(newTwoFactorOTP.getId());
+
+            return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
         }
 
         AuthResponse res = new AuthResponse();
