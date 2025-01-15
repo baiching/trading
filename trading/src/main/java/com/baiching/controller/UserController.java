@@ -1,9 +1,13 @@
 package com.baiching.controller;
 
 import com.baiching.domain.VerificationType;
+import com.baiching.model.ForgotPasswordToken;
 import com.baiching.model.User;
 import com.baiching.model.VerificationCode;
+import com.baiching.request.ResetPasswordRequest;
+import com.baiching.response.ApiResponse;
 import com.baiching.service.EmailService;
+import com.baiching.service.ForgotPasswordService;
 import com.baiching.service.UserService;
 import com.baiching.service.VerificationCodeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +26,9 @@ public class UserController {
     @Autowired
     private VerificationCodeService verificationCodeService;
 
+    @Autowired
+    private ForgotPasswordService forgotPasswordService;
+
     @GetMapping("/api/users/profile")
     public ResponseEntity<User> getUserProfile(@RequestHeader("Authorization") String jwt) throws Exception {
         User user = userService.findUserByJwt(jwt);
@@ -30,7 +37,7 @@ public class UserController {
     }
 
     @PostMapping("/api/users/verification/{verificationType}/send-otp")
-    public ResponseEntity<String> sendVerification(
+    public ResponseEntity<String> sendVerificationOtp (
             @RequestHeader("Authorization") String jwt,
             @PathVariable VerificationType verificationType) throws Exception {
         User user = userService.findUserByJwt(jwt);
@@ -67,6 +74,26 @@ public class UserController {
             verificationCodeService.deleteVerificationCodeById(verificationCode);
 
             return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+        }
+
+        throw new Exception("Wrong otp");
+    }
+
+    @PostMapping("/auth/users/reset-password/send-otp")
+    public ResponseEntity<ApiResponse> resetPassword(
+            @RequestParam String id,
+            @RequestBody ResetPasswordRequest req,
+            @RequestHeader("Authorization") String jwt) throws Exception {
+
+        ForgotPasswordToken forgotPasswordToken = forgotPasswordService.findById(id);
+
+        boolean isVerified = forgotPasswordToken.getOtp().equals(req.getOtp());
+
+        if(isVerified) {
+            userService.updatePassword(forgotPasswordToken.getUser(), req.getPassword());
+            ApiResponse res = new ApiResponse();
+            res.setMessage("password updated successfully");
+            return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
         }
 
         throw new Exception("Wrong otp");
