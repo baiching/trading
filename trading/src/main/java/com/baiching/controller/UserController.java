@@ -66,7 +66,7 @@ public class UserController {
 
             verificationCodeService.deleteVerificationCodeById(verificationCode);
 
-            return new ResponseEntity<>(updatedUser, HttpStatus.OK)
+            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
         }
 
         throw new Exception("Wrong otp");
